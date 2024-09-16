@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda con Carrito</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+</head>
+<body>
+    <header>
+        <div class="logo">TEMU</div>
+        <div class="busqueda">
+            <input type="text" id="inputbusqueda" placeholder="Buscar producto...">
+            <button onclick="buscarproducto()">Buscar</button>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#">Inicio</a></li>
+                <li><a href="#">Productos</a></li>
+                <li><a href="#">Contacto</a></li>
+            </ul>
+        </nav>
+        <div class="carrito" onmouseover="mostrarcarrito()" onmouseout="ocultocarrito()">
+            <i class="fa fa-cart-plus" id="iconocarrito" aria-hidden="true"></i>
+            <span id="conteocarrito">0</span>
+            <div class="indicador" id="indicadorcarrito">0</div>
+            <div class="contenido" id="contenidoarrito">
+                <ul id="listacontenidoarrito"></ul>
+                <div class="total" id="totalarrito">Total: $0</div>
+            </div>
+        </div>
+    </header>
+    <main>
+        <section class="productos" id="productoslista"></section>
+    </main>
+
+    <button class="botonflotante" onclick="realizarcompra()">COMPRAR</button>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script>
+        let montototal = 0;
+        let carrito = [];
+        let productos = [];
+        function mostrarcarrito() {
+            document.getElementById('contenidoarrito').style.display = 'block';
+        }
+        function ocultocarrito() {
+            document.getElementById('contenidoarrito').style.display = 'none';
+        }
+        function agregaralcarrito(nombreproducto, imagenproducto, precioproducto) {
+            const precio = parseFloat(precioproducto.slice(1).replace(',', ''));
+            const nombresimplificado = nombreproducto.length > 30 ? nombreproducto.slice(0, 30) + '...' : nombreproducto;
+            const productoencarrito = carrito.find(producto => producto.nombre === nombreproducto);
+            if (productoencarrito) {
+                productoencarrito.cantidad += 1;
+                productoencarrito.totalprecio += precio;
+            } else {
+                carrito.push({
+                    nombre: nombreproducto,
+                    imagen: imagenproducto,
+                    precio: precio,
+                    cantidad: 1,
+                    totalprecio: precio
+                });
+            }
+            actualizarcarrito();
+            Swal.fire({
+                title: 'Producto agregado!',
+                text: `${nombreproducto} ha sido añadido al carrito.`,
+                icon: 'success',
+                confirmButtonText: 'Aceptar',
+                customClass: {
+                    container: 'swal-custom-container',
+                    title: 'swal-custom-title',
+                    content: 'swal-custom-content',
+                    confirmButton: 'swal-custom-confirm-button'
+                }
+            });
+        }
+        function actualizarcarrito() {
+            const listacontenidoarrito = document.getElementById('listacontenidoarrito');
+            listacontenidoarrito.innerHTML = '';
+            montototal = 0;
+            let contador = 0;
+            carrito.forEach(producto => {
+                const item = document.createElement('li');
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; width: 100%;">
+                        <div style="position: relative; flex: 0 0 100px;">
+                            <img src="${producto.imagen}" alt="${producto.nombre}">
+                            <span class="indicadorcantidad">${producto.cantidad}</span>
+                        </div>
+                        <div class="info" style="flex: 1; margin-right: 15px;">
+                            <span>${producto.nombre}</span>
+                            <span>Precio: $${producto.precio.toLocaleString()}</span>
+                        </div>
+                        <div class="subtotal" style="text-align: right; flex: 0 0 150px;">
+                            Subtotal: $${producto.totalprecio.toLocaleString()}
+                        </div>
+                        <button onclick="eliminardelcarrito('${producto.nombre}')">Eliminar</button>
+                    </div>
+                `;
+                listacontenidoarrito.appendChild(item);
+                montototal += producto.totalprecio;
+                contador += producto.cantidad;
+            });
+            document.getElementById('totalarrito').textContent = `Total: $${montototal.toLocaleString()}`;
+            document.getElementById('indicadorcarrito').textContent = contador;
+        }
+        function eliminardelcarrito(nombreproducto) {
+            const productoencarrito = carrito.find(producto => producto.nombre === nombreproducto);
+            if (productoencarrito) {
+                if (productoencarrito.cantidad > 1) {
+                    productoencarrito.cantidad -= 1;
+                    productoencarrito.totalprecio -= productoencarrito.precio;
+                } else {
+                    carrito = carrito.filter(producto => producto.nombre !== nombreproducto);
+                }
+            }
+            actualizarcarrito();
+        }
+        function realizarcompra() {
+            if (carrito.length > 0) {
+                Swal.fire({
+                    title: '¡Compra realizada!',
+                    text: 'Gracias por tu compra.',
+                    icon: 'success',
+                    confirmButtonText: 'Aceptar',
+                    customClass: {
+                        container: 'swal-custom-container',
+                        title: 'swal-custom-title',
+                        content: 'swal-custom-content',
+                        confirmButton: 'swal-custom-confirm-button'
+                    }
+                });
+                carrito = [];
+                actualizarcarrito();
+            } else {
+                Swal.fire({
+                    title: 'Carrito vacío',
+                    text: 'Agrega productos antes de comprar.',
+                    icon: 'error',
+                    confirmButtonText: 'Aceptar',
+                    customClass: {
+                        container: 'swal-custom-container',
+                        title: 'swal-custom-title',
+                        content: 'swal-custom-content',
+                        confirmButton: 'swal-custom-confirm-button'
+                    }
+                });
+            }
+        }
+        function buscarproducto() {
+            const input = document.getElementById('inputbusqueda').value.toLowerCase();
+            const productosfiltrados = productos.filter(producto => producto.nombre.toLowerCase().includes(input));
+            mostrarproductos(productosfiltrados);
+        }
+        function mostrarproductos(productos) {
+            const productoslista = document.getElementById('productoslista');
+            productoslista.innerHTML = '';
+            productos.forEach(producto => {
+                const item = document.createElement('div');
+                item.classList.add('producto');
+                item.innerHTML = `
+                    <img src="${producto.imagen}" alt="${producto.nombre}">
+                    <h2>${producto.nombre}</h2>
+                    <p>Precio: ${producto.precio}</p>
+                    <button onclick="agregaralcarrito('${producto.nombre}', '${producto.imagen}', '${producto.precio}')">Agregar al carrito</button>
+                `;
+                productoslista.appendChild(item);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            productos = [
+                { nombre: 'iPhone 16 Pro Max', imagen: 'https://i.pinimg.com/564x/79/e6/1a/79e61aae36bf6125f87c7e3ec3e7dfbb.jpg', precio: '$990,000' },
+                { nombre: 'Jordan Retro 4', imagen: 'https://m.media-amazon.com/images/I/61SgPEad-hL._AC_SX500_.jpg', precio: '$190,000' },
+                { nombre: 'Sudadera Gato/Sapo', imagen: 'https://img.kwcdn.com/product/fancy/e7e7a344-6e8c-41da-9f9a-89c2582205a6.jpg?imageView2/2/w/800/q/70/format/webp', precio: '$17,000' },
+                { nombre: 'Luces Led', imagen: 'https://img.kwcdn.com/product/fancy/cf73236f-151f-49d5-9e02-1b848e6ff267.jpg?imageView2/2/w/800/q/70/format/webp', precio: '$0' }
+            ];
+            mostrarproductos(productos);
+        });
+    </script>
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            background-color: #ff6600;
+            color: white;
+            padding: 10px 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        header .logo {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            flex: 1;
+        }
+        header .busqueda {
+            flex: 2;
+            display: flex;
+            align-items: center;
+        }
+        header .busqueda input {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        header .busqueda button {
+            background-color: #ff6600;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        header .busqueda button:hover {
+            background-color: #e65c00;
+        }
+        header nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 20px;
+        }
+        header nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        header nav ul li a:hover {
+            color: #ffe6cc;
+        }
+        header .carrito {
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        header .carrito i {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        header .carrito .indicador {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        header .carrito .contenido {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            color: black;
+            border: 2px solid #ff6600;
+            width: 500px; 
+            max-height: 500px; 
+            overflow-y: auto; 
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px; 
+        }
+        header .carrito .contenido ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        header .carrito .contenido li {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        header .carrito .contenido li img {
+            width: 100px; 
+            height: 100px;
+            object-fit: cover;
+            margin-right: 15px;
+            border-radius: 5px;
+        }
+        header .carrito .contenido li .indicadorcantidad {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 3px 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        header .carrito .contenido li .info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            margin-right: 15px;
+        }
+        header .carrito .contenido li .info span {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        header .carrito .contenido li .subtotal {
+            text-align: right;
+            flex: 0 0 150px; 
+            font-size: 14px;
+        }
+        header .carrito .total {
+            padding: 15px;
+            background-color: #ff6600;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            font-size: 16px;
+        }
+        main {
+            padding: 20px;
+        }
+        .productos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px;
+        }
+        .producto {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            transition: box-shadow 0.3s;
+        }
+        .producto:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .producto img {
+            width: 100%;
+            height: 250px; 
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .botonflotante {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #ff6600;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .botonflotante:hover {
+            background-color: #e65c00;
+        }
+        button {
+            background-color: #ff6600;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #e65c00;
+        }
+        .swal-custom-container {
+            font-family: 'Arial', sans-serif;
+            border-radius: 10px;
+        }
+        .swal-custom-title {
+            color: #ff6600;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .swal-custom-content {
+            color: #333;
+            font-size: 16px;
+        }
+        .swal-custom-confirm-button {
+            background-color: #ff6600;
+            color: white;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-weight: bold;
+            border: none;
+        }
+        .swal-custom-confirm-button:hover {
+            background-color: #e65c00;
+        }
+    </style>
+</body>
+</html>
+
